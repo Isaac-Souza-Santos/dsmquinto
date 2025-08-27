@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DPM - Gerenciador de Tarefas</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <!-- Header Fixo -->
+    <header class="header">
+      <div class="container">
+        <div class="logo">
+          <h1>DPM</h1>
+          <span class="logo-subtitle">Task Manager</span>
+        </div>
+        <nav class="nav">
+          <ul>
+            <li><a href="#tarefas">Minhas Tarefas</a></li>
+            <li><a href="#nova-tarefa">Nova Tarefa</a></li>
+            <li><a href="#estatisticas">Estatísticas</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Seção Hero - 100vh -->
+    <section id="hero" class="hero">
+      <div class="container">
+        <div class="hero-content">
+          <h2 class="hero-title">Gerencie suas Tarefas</h2>
+          <p class="hero-text">
+            Organize, acompanhe e complete suas atividades diárias com
+            facilidade. Sistema inteligente para aumentar sua produtividade.
+          </p>
+          <div class="hero-stats">
+            <div class="stat-item">
+              <span class="stat-number" id="total-tarefas">0</span>
+              <span class="stat-label">Total</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number" id="tarefas-pendentes">0</span>
+              <span class="stat-label">Pendentes</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number" id="tarefas-concluidas">0</span>
+              <span class="stat-label">Concluídas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Seção de Tarefas -->
+    <section id="tarefas" class="tasks-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Minhas Tarefas</h2>
+          <div class="filters">
+            <button class="filter-btn active" data-filter="todas">Todas</button>
+            <button class="filter-btn" data-filter="pendentes">
+              Pendentes
+            </button>
+            <button class="filter-btn" data-filter="concluidas">
+              Concluídas
+            </button>
+          </div>
+        </div>
+
+        <div class="tasks-container">
+          <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Carregando tarefas...</p>
+          </div>
+
+          <div id="tasks-list" class="tasks-list" style="display: none">
+            <!-- Tarefas serão inseridas aqui via JavaScript -->
+          </div>
+
+          <div id="no-tasks" class="no-tasks" style="display: none">
+            <p>Nenhuma tarefa encontrada. Crie sua primeira tarefa!</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Seção Nova Tarefa -->
+    <section id="nova-tarefa" class="new-task-section">
+      <div class="container">
+        <h2 class="section-title">Criar Nova Tarefa</h2>
+        <form id="new-task-form" class="task-form">
+          <div class="form-group">
+            <label for="task-title">Título da Tarefa *</label>
+            <input
+              type="text"
+              id="task-title"
+              name="titulo"
+              placeholder="Ex: Estudar Python"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="task-description">Descrição (opcional)</label>
+            <textarea
+              id="task-description"
+              name="descricao"
+              placeholder="Detalhes da tarefa..."
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="task-status">Status</label>
+            <select id="task-status" name="status">
+              <option value="pendente">Pendente</option>
+              <option value="concluida">Concluída</option>
+            </select>
+          </div>
+
+          <button type="submit" class="submit-btn">
+            <span class="btn-text">Criar Tarefa</span>
+            <span class="btn-loading" style="display: none">Criando...</span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Seção Estatísticas -->
+    <section id="estatisticas" class="stats-section">
+      <div class="container">
+        <h2 class="section-title">Estatísticas</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <h3>Progresso Geral</h3>
+            <div class="progress-bar">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <p class="progress-text" id="progress-text">0% concluído</p>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">⚡</div>
+            <h3>Produtividade</h3>
+            <p class="stat-value" id="productivity">0 tarefas/dia</p>
+            <small>Média dos últimos 7 dias</small>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">🎯</div>
+            <h3>Meta Diária</h3>
+            <p class="stat-value" id="daily-goal">0/5 tarefas</p>
+            <small>Objetivo: 5 tarefas por dia</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modal de Edição -->
+    <div id="edit-modal" class="modal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Editar Tarefa</h3>
+          <button class="close-btn" id="close-modal">&times;</button>
+        </div>
+        <form id="edit-task-form" class="task-form">
+          <input type="hidden" id="edit-task-id" name="id" />
+          <div class="form-group">
+            <label for="edit-task-title">Título</label>
+            <input type="text" id="edit-task-title" name="titulo" required />
+          </div>
+          <div class="form-group">
+            <label for="edit-task-description">Descrição</label>
+            <textarea
+              id="edit-task-description"
+              name="descricao"
+              rows="3"
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label for="edit-task-status">Status</label>
+            <select id="edit-task-status" name="status">
+              <option value="pendente">Pendente</option>
+              <option value="concluida">Concluída</option>
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" id="cancel-edit">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-primary">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Toast de Notificação -->
+    <div id="toast" class="toast" style="display: none">
+      <span id="toast-message"></span>
+      <button class="toast-close">&times;</button>
+    </div>
+
+    <script src="js/main.js"></script>
+  </body>
+</html>
