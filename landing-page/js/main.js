@@ -1,8 +1,17 @@
 // Configuração da API
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = "http://127.0.0.1:5000";
 const API_ENDPOINTS = {
-  tarefas: `${API_BASE_URL}/tarefas`,
+  tarefas: `${API_BASE_URL}/tarefas/`,
 };
+
+// Função auxiliar para construir URLs corretamente
+function buildApiUrl(endpoint, id = null) {
+  if (id !== null) {
+    // Remove a barra final do endpoint e adiciona o ID
+    return endpoint.replace(/\/$/, "") + "/" + id;
+  }
+  return endpoint;
+}
 
 // Estado global da aplicação
 let tasks = [];
@@ -79,7 +88,14 @@ async function loadTasks() {
   try {
     showLoading(true);
 
-    const response = await fetch(API_ENDPOINTS.tarefas);
+    const response = await fetch(API_ENDPOINTS.tarefas, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      mode: "cors",
+      credentials: "same-origin",
+    });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
@@ -109,13 +125,19 @@ function renderTasks() {
   const filteredTasks = filterTasks(tasks, currentFilter);
 
   elements.tasksList.innerHTML = filteredTasks
-    .map(
-      (task) => `
-    <div class="task-item ${task.status}" data-id="${task.id}">
+    .map((task) => {
+      // Validar e normalizar o status da tarefa
+      const status =
+        task.status && ["pendente", "concluida"].includes(task.status)
+          ? task.status
+          : "pendente";
+
+      return `
+    <div class="task-item ${status}" data-id="${task.id}">
       <div class="task-header">
         <div>
           <h3 class="task-title">${escapeHtml(task.titulo)}</h3>
-          <span class="task-status ${task.status}">${task.status}</span>
+          <span class="task-status ${status}">${status}</span>
         </div>
       </div>
       
@@ -132,15 +154,15 @@ function renderTasks() {
         <button class="task-btn btn-toggle" onclick="toggleTaskStatus(${
           task.id
         })">
-          ${task.status === "pendente" ? "✅ Concluir" : "🔄 Reabrir"}
+          ${status === "pendente" ? "✅ Concluir" : "🔄 Reabrir"}
         </button>
         <button class="task-btn btn-delete" onclick="deleteTask(${task.id})">
           🗑️ Excluir
         </button>
       </div>
     </div>
-  `
-    )
+  `;
+    })
     .join("");
 }
 
@@ -173,10 +195,16 @@ async function handleCreateTask(event) {
   event.preventDefault();
 
   const formData = new FormData(event.target);
+  const status = formData.get("status");
+
+  // Validar e normalizar o status
+  const validStatus =
+    status && ["pendente", "concluida"].includes(status) ? status : "pendente";
+
   const taskData = {
     titulo: formData.get("titulo"),
     descricao: formData.get("descricao") || "",
-    status: formData.get("status"),
+    status: validStatus,
   };
 
   try {
@@ -193,7 +221,10 @@ async function handleCreateTask(event) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Accept: "application/json",
       },
+      mode: "cors",
+      credentials: "same-origin",
       body: JSON.stringify(taskData),
     });
 
@@ -257,11 +288,14 @@ async function handleEditTask(event) {
   };
 
   try {
-    const response = await fetch(`${API_ENDPOINTS.tarefas}/${taskId}`, {
+    const response = await fetch(buildApiUrl(API_ENDPOINTS.tarefas, taskId), {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
+        Accept: "application/json",
       },
+      mode: "cors",
+      credentials: "same-origin",
       body: JSON.stringify(taskData),
     });
 
@@ -296,11 +330,14 @@ async function toggleTaskStatus(taskId) {
   const newStatus = task.status === "pendente" ? "concluida" : "pendente";
 
   try {
-    const response = await fetch(`${API_ENDPOINTS.tarefas}/${taskId}`, {
+    const response = await fetch(buildApiUrl(API_ENDPOINTS.tarefas, taskId), {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
+        Accept: "application/json",
       },
+      mode: "cors",
+      credentials: "same-origin",
       body: JSON.stringify({
         ...task,
         status: newStatus,
@@ -336,8 +373,13 @@ async function deleteTask(taskId) {
   }
 
   try {
-    const response = await fetch(`${API_ENDPOINTS.tarefas}/${taskId}`, {
+    const response = await fetch(buildApiUrl(API_ENDPOINTS.tarefas, taskId), {
       method: "DELETE",
+      headers: {
+        Accept: "application/json",
+      },
+      mode: "cors",
+      credentials: "same-origin",
     });
 
     if (!response.ok) {
@@ -436,18 +478,37 @@ function escapeHtml(text) {
 // Testar conexão com a API
 async function testAPIConnection() {
   try {
-    const response = await fetch(API_ENDPOINTS.tarefas);
+    console.log("🔍 Testando conexão com a API...");
+    console.log("📍 URL da API:", API_ENDPOINTS.tarefas);
+
+    const response = await fetch(API_ENDPOINTS.tarefas, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      mode: "cors",
+      credentials: "same-origin",
+    });
+
     if (response.ok) {
       console.log("✅ API está funcionando!");
+      console.log("📊 Status:", response.status);
+      console.log(
+        "🔗 Headers:",
+        Object.fromEntries(response.headers.entries())
+      );
       return true;
     } else {
-      throw new Error("API não está respondendo");
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
   } catch (error) {
     console.log("❌ Erro ao conectar com a API:", error.message);
-    console.log(
-      "💡 Certifique-se de que a API está rodando em http://localhost:5000"
-    );
+    console.log("💡 Possíveis soluções:");
+    console.log("   1. Certifique-se de que a API está rodando");
+    console.log("   2. Execute: python main.py");
+    console.log("   3. Verifique se a porta 5000 está livre");
+    console.log("   4. Verifique se o Flask-CORS está instalado");
+    console.log("📍 URL tentada:", API_ENDPOINTS.tarefas);
     return false;
   }
 }

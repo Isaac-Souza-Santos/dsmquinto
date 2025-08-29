@@ -1,9 +1,20 @@
 from flask import Flask
 from flask_restx import Api
+from flask_cors import CORS
 
 def create_app():
     """Factory para criar a aplicação Flask"""
     app = Flask(__name__)
+    
+    # Configurar CORS para permitir conexão do frontend
+    # Configuração mais permissiva para desenvolvimento
+    CORS(app, 
+         origins=["http://127.0.0.1:5500", "http://localhost:5500", "http://localhost:3000"],
+         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+         allow_headers=["Content-Type", "Authorization", "Accept"],
+         supports_credentials=True,
+         max_age=3600
+    )
     
     # Configuração da API
     api = Api(app, 
