@@ -2,3 +2,14 @@ flask
 flask-restx
 flask-cors
 requests
+# Autenticação e segurança
+PyJWT==2.8.0
+Werkzeug==2.3.7
+cryptography==41.0.7
+pyotp==2.9.0
+qrcode==7.4.2
+Pillow==10.0.1
+# Email para 2FA
+Flask-Mail==0.9.1
+# Validação
+email-validator==2.0.0

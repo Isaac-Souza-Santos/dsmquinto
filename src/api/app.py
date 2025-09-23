@@ -26,6 +26,13 @@ def create_app():
     
     # Criar e registrar rotas
     from src.routes.api import create_routes
+    from src.routes.auth import create_auth_routes
+    
+    # Rotas de autenticação
+    auth_ns = create_auth_routes(api)
+    api.add_namespace(auth_ns)
+    
+    # Rotas de tarefas
     api_ns = create_routes(api)
     api.add_namespace(api_ns)
     

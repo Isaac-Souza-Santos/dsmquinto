@@ -1,6 +1,7 @@
 from flask import request
 from flask_restx import Resource, Namespace
 from datetime import datetime
+from src.utils.auth_middleware import require_auth, get_current_user
 
 def create_routes(api):
     """Cria as rotas da API de tarefas"""
@@ -19,13 +20,18 @@ def create_routes(api):
     class TarefasList(Resource):
         @api_ns.doc('listar_tarefas')
         @api_ns.response(200, 'Sucesso', tarefa_lista_model)
+        @api_ns.response(401, 'Token inválido')
+        @require_auth
         def get(self):
-            """Listar todas as tarefas"""
+            """Listar todas as tarefas do usuário"""
             try:
+                # Obter usuário atual
+                usuario_atual = get_current_user()
+                
                 conn = get_db_connection()
                 cursor = conn.cursor()
                 
-                cursor.execute('SELECT * FROM tarefas ORDER BY data_criacao DESC')
+                cursor.execute('SELECT * FROM tarefas WHERE usuario_id = ? ORDER BY data_criacao DESC', (usuario_atual.id,))
                 tarefas = cursor.fetchall()
                 
                 tarefas_list = []
@@ -52,9 +58,14 @@ def create_routes(api):
         @api_ns.expect(tarefa_model)
         @api_ns.response(201, 'Tarefa criada com sucesso', tarefa_resposta_model)
         @api_ns.response(400, 'Erro de validação')
+        @api_ns.response(401, 'Token inválido')
+        @require_auth
         def post(self):
             """Criar nova tarefa"""
             try:
+                # Obter usuário atual
+                usuario_atual = get_current_user()
+                
                 dados = request.get_json()
                 if not dados or 'titulo' not in dados:
                     api_ns.abort(400, "Campo 'titulo' é obrigatório")
@@ -72,9 +83,9 @@ def create_routes(api):
                 cursor = conn.cursor()
                 
                 cursor.execute('''
-                    INSERT INTO tarefas (titulo, descricao, status, data_criacao, data_atualizacao)
-                    VALUES (?, ?, ?, ?, ?)
-                ''', (titulo, descricao, status, data_atual, data_atual))
+                    INSERT INTO tarefas (titulo, descricao, status, data_criacao, data_atualizacao, usuario_id)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (titulo, descricao, status, data_atual, data_atual, usuario_atual.id))
                 
                 tarefa_id = cursor.lastrowid
                 conn.commit()
@@ -97,13 +108,18 @@ def create_routes(api):
         @api_ns.doc('obter_tarefa')
         @api_ns.response(200, 'Sucesso', tarefa_resposta_model)
         @api_ns.response(404, 'Tarefa não encontrada')
+        @api_ns.response(401, 'Token inválido')
+        @require_auth
         def get(self, id):
             """Obter tarefa por ID"""
             try:
+                # Obter usuário atual
+                usuario_atual = get_current_user()
+                
                 conn = get_db_connection()
                 cursor = conn.cursor()
                 
-                cursor.execute('SELECT * FROM tarefas WHERE id = ?', (id,))
+                cursor.execute('SELECT * FROM tarefas WHERE id = ? AND usuario_id = ?', (id, usuario_atual.id))
                 tarefa = cursor.fetchone()
                 
                 conn.close()
@@ -127,9 +143,14 @@ def create_routes(api):
         @api_ns.response(200, 'Tarefa atualizada com sucesso', tarefa_resposta_model)
         @api_ns.response(400, 'Erro de validação')
         @api_ns.response(404, 'Tarefa não encontrada')
+        @api_ns.response(401, 'Token inválido')
+        @require_auth
         def put(self, id):
             """Atualizar tarefa por ID"""
             try:
+                # Obter usuário atual
+                usuario_atual = get_current_user()
+                
                 dados = request.get_json()
                 if not dados:
                     api_ns.abort(400, "Dados são obrigatórios")
@@ -137,8 +158,8 @@ def create_routes(api):
                 conn = get_db_connection()
                 cursor = conn.cursor()
                 
-                # Verificar se a tarefa existe
-                cursor.execute('SELECT * FROM tarefas WHERE id = ?', (id,))
+                # Verificar se a tarefa existe e pertence ao usuário
+                cursor.execute('SELECT * FROM tarefas WHERE id = ? AND usuario_id = ?', (id, usuario_atual.id))
                 tarefa_existente = cursor.fetchone()
                 
                 if not tarefa_existente:
@@ -179,14 +200,19 @@ def create_routes(api):
         @api_ns.doc('remover_tarefa')
         @api_ns.response(200, 'Tarefa removida com sucesso', mensagem_model)
         @api_ns.response(404, 'Tarefa não encontrada')
+        @api_ns.response(401, 'Token inválido')
+        @require_auth
         def delete(self, id):
             """Remover tarefa por ID"""
             try:
+                # Obter usuário atual
+                usuario_atual = get_current_user()
+                
                 conn = get_db_connection()
                 cursor = conn.cursor()
                 
-                # Verificar se a tarefa existe
-                cursor.execute('SELECT * FROM tarefas WHERE id = ?', (id,))
+                # Verificar se a tarefa existe e pertence ao usuário
+                cursor.execute('SELECT * FROM tarefas WHERE id = ? AND usuario_id = ?', (id, usuario_atual.id))
                 tarefa_existente = cursor.fetchone()
                 
                 if not tarefa_existente:

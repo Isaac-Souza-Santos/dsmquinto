@@ -4,6 +4,10 @@ const API_ENDPOINTS = {
   tarefas: `${API_BASE_URL}/tarefas/`,
 };
 
+// Estado de autenticação
+let authToken = null;
+let currentUser = null;
+
 // Função auxiliar para construir URLs corretamente
 function buildApiUrl(endpoint, id = null) {
   if (id !== null) {
@@ -38,9 +42,25 @@ const elements = {
 
 // Inicialização da aplicação
 document.addEventListener("DOMContentLoaded", function () {
-  initializeApp();
+  // Verificar autenticação primeiro
+  checkAuthentication();
   setupEventListeners();
 });
+
+// Verificar se usuário está autenticado
+function checkAuthentication() {
+  const savedToken = localStorage.getItem("auth_token");
+  const savedUser = localStorage.getItem("current_user");
+
+  if (savedToken && savedUser) {
+    authToken = savedToken;
+    currentUser = JSON.parse(savedUser);
+    initializeApp();
+  } else {
+    // Redirecionar para login
+    window.location.href = "login.html";
+  }
+}
 
 // Inicializar aplicação
 async function initializeApp() {
@@ -92,6 +112,7 @@ async function loadTasks() {
       method: "GET",
       headers: {
         Accept: "application/json",
+        Authorization: `Bearer ${authToken}`,
       },
       mode: "cors",
       credentials: "same-origin",
@@ -222,6 +243,7 @@ async function handleCreateTask(event) {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        Authorization: `Bearer ${authToken}`,
       },
       mode: "cors",
       credentials: "same-origin",
@@ -293,6 +315,7 @@ async function handleEditTask(event) {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        Authorization: `Bearer ${authToken}`,
       },
       mode: "cors",
       credentials: "same-origin",
@@ -335,6 +358,7 @@ async function toggleTaskStatus(taskId) {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        Authorization: `Bearer ${authToken}`,
       },
       mode: "cors",
       credentials: "same-origin",
@@ -377,6 +401,7 @@ async function deleteTask(taskId) {
       method: "DELETE",
       headers: {
         Accept: "application/json",
+        Authorization: `Bearer ${authToken}`,
       },
       mode: "cors",
       credentials: "same-origin",
