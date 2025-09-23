@@ -52,7 +52,8 @@ def init_database():
             descricao TEXT,
             status TEXT DEFAULT 'pendente',
             data_criacao TEXT NOT NULL,
-            data_atualizacao TEXT NOT NULL
+            data_atualizacao TEXT NOT NULL,
+            usuario_id INTEGER
         )
     ''')
     

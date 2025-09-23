@@ -9,10 +9,8 @@ def require_auth(f):
         # Verificar se há token de autorização
         token = request.headers.get('Authorization')
         if not token or not token.startswith('Bearer '):
-            return jsonify({
-                'error': 'Token de autorização necessário',
-                'message': 'Adicione o header Authorization: Bearer <token>'
-            }), 401
+            from flask import abort
+            abort(401, 'Token de autorização necessário')
         
         # Extrair token
         token = token.replace('Bearer ', '')
@@ -20,10 +18,8 @@ def require_auth(f):
         # Verificar token
         usuario = Usuario.verificar_jwt_token(token)
         if not usuario:
-            return jsonify({
-                'error': 'Token inválido ou expirado',
-                'message': 'Faça login novamente'
-            }), 401
+            from flask import abort
+            abort(401, 'Token inválido ou expirado')
         
         # Adicionar usuário ao contexto da requisição
         request.current_user = usuario
@@ -36,43 +32,30 @@ def require_2fa(f):
     """Decorator para rotas que precisam de verificação 2FA"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        from flask import abort
+        
         # Primeiro verificar autenticação básica
         token = request.headers.get('Authorization')
         if not token or not token.startswith('Bearer '):
-            return jsonify({
-                'error': 'Token de autorização necessário',
-                'message': 'Adicione o header Authorization: Bearer <token>'
-            }), 401
+            abort(401, 'Token de autorização necessário')
         
         token = token.replace('Bearer ', '')
         usuario = Usuario.verificar_jwt_token(token)
         if not usuario:
-            return jsonify({
-                'error': 'Token inválido ou expirado',
-                'message': 'Faça login novamente'
-            }), 401
+            abort(401, 'Token inválido ou expirado')
         
         # Verificar se 2FA está configurado
         if not usuario.secret_2fa:
-            return jsonify({
-                'error': '2FA não configurado',
-                'message': 'Configure o 2FA primeiro em /auth/setup-2fa'
-            }), 403
+            abort(403, '2FA não configurado')
         
         # Verificar código 2FA no header
         codigo_2fa = request.headers.get('X-2FA-Code')
         if not codigo_2fa:
-            return jsonify({
-                'error': 'Código 2FA necessário',
-                'message': 'Adicione o header X-2FA-Code com o código do Google Authenticator'
-            }), 401
+            abort(401, 'Código 2FA necessário')
         
         # Verificar código 2FA
         if not usuario.verificar_codigo_2fa(codigo_2fa):
-            return jsonify({
-                'error': 'Código 2FA inválido',
-                'message': 'Verifique o código do Google Authenticator'
-            }), 401
+            abort(401, 'Código 2FA inválido')
         
         # Adicionar usuário ao contexto
         request.current_user = usuario
