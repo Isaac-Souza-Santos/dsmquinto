@@ -1,6 +1,7 @@
 from functools import wraps
 from flask import request, jsonify
 from src.models.usuario import Usuario
+from src.utils.permissions import verificar_permissao, verificar_nivel_minimo
 
 def require_auth(f):
     """Decorator para proteger rotas que precisam de autenticação"""

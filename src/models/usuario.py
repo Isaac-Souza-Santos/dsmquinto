@@ -62,6 +62,7 @@ def init_auth_database():
             email TEXT UNIQUE NOT NULL,
             senha_hash TEXT NOT NULL,
             secret_2fa TEXT,
+            nivel_acesso TEXT DEFAULT 'visualizacao',
             ativo BOOLEAN DEFAULT 1,
             data_criacao TEXT NOT NULL
         )
@@ -94,12 +95,13 @@ def get_db_connection():
     return sqlite3.connect('tarefas.db')
 
 class Usuario:
-    def __init__(self, id=None, nome=None, email=None, senha_hash=None, secret_2fa=None, ativo=True, data_criacao=None):
+    def __init__(self, id=None, nome=None, email=None, senha_hash=None, secret_2fa=None, nivel_acesso='visualizacao', ativo=True, data_criacao=None):
         self.id = id
         self.nome = nome
         self.email = email
         self.senha_hash = senha_hash
         self.secret_2fa = secret_2fa
+        self.nivel_acesso = nivel_acesso
         self.ativo = ativo
         self.data_criacao = data_criacao
     
@@ -124,15 +126,15 @@ class Usuario:
         data_atual = datetime.now().isoformat()
         
         cursor.execute('''
-            INSERT INTO usuarios (nome, email, senha_hash, secret_2fa, data_criacao)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (nome, email, senha_hash, secret_2fa, data_atual))
+            INSERT INTO usuarios (nome, email, senha_hash, secret_2fa, nivel_acesso, data_criacao)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (nome, email, senha_hash, secret_2fa, 'visualizacao', data_atual))
         
         usuario_id = cursor.lastrowid
         conn.commit()
         conn.close()
         
-        return Usuario(id=usuario_id, nome=nome, email=email, secret_2fa=secret_2fa, data_criacao=data_atual)
+        return Usuario(id=usuario_id, nome=nome, email=email, secret_2fa=secret_2fa, nivel_acesso='visualizacao', data_criacao=data_atual)
     
     @staticmethod
     def buscar_por_email(email):
@@ -153,8 +155,9 @@ class Usuario:
             email=usuario_data[2],
             senha_hash=usuario_data[3],
             secret_2fa=usuario_data[4],
-            ativo=usuario_data[5],
-            data_criacao=usuario_data[6]
+            nivel_acesso=usuario_data[5],
+            ativo=usuario_data[6],
+            data_criacao=usuario_data[7]
         )
     
     def verificar_senha(self, senha):
@@ -252,8 +255,9 @@ class Usuario:
                 nome=sessao_data[7],
                 email=sessao_data[8],
                 secret_2fa=sessao_data[10],
-                ativo=sessao_data[11],
-                data_criacao=sessao_data[12]
+                nivel_acesso=sessao_data[11],
+                ativo=sessao_data[12],
+                data_criacao=sessao_data[13]
             )
             
         except jwt.ExpiredSignatureError:
@@ -267,6 +271,7 @@ class Usuario:
             'id': self.id,
             'nome': self.nome,
             'email': self.email,
+            'nivel_acesso': self.nivel_acesso,
             '2fa_ativo': bool(self.secret_2fa),
             'data_criacao': self.data_criacao
         }

@@ -65,9 +65,23 @@ function checkAuthentication() {
 // Inicializar aplicação
 async function initializeApp() {
   try {
+    // Verificar se o token ainda é válido
+    if (!authToken) {
+      window.location.href = "login.html";
+      return;
+    }
+
     await loadTasks();
     updateStatistics();
   } catch (error) {
+    // Se erro 401, redirecionar para login
+    if (error.message.includes("401")) {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("current_user");
+      window.location.href = "login.html";
+      return;
+    }
+
     showToast("Erro ao carregar tarefas", "error");
     console.error("Erro na inicialização:", error);
   }
@@ -118,6 +132,9 @@ async function loadTasks() {
       credentials: "same-origin",
     });
     if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error(`401: Token inválido ou expirado`);
+      }
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
@@ -156,10 +173,8 @@ function renderTasks() {
       return `
     <div class="task-item ${status}" data-id="${task.id}">
       <div class="task-header">
-        <div>
-          <h3 class="task-title">${escapeHtml(task.titulo)}</h3>
-          <span class="task-status ${status}">${status}</span>
-        </div>
+        <h3 class="task-title">${escapeHtml(task.titulo)}</h3>
+        <span class="task-status ${status}">${status}</span>
       </div>
       
       ${
@@ -170,15 +185,18 @@ function renderTasks() {
       
       <div class="task-actions">
         <button class="task-btn btn-edit" onclick="openEditModal(${task.id})">
-          ✏️ Editar
+          <i class="fas fa-edit"></i>
+          Editar
         </button>
         <button class="task-btn btn-toggle" onclick="toggleTaskStatus(${
           task.id
         })">
-          ${status === "pendente" ? "✅ Concluir" : "🔄 Reabrir"}
+          <i class="fas fa-${status === "pendente" ? "check" : "undo"}"></i>
+          ${status === "pendente" ? "Concluir" : "Reabrir"}
         </button>
         <button class="task-btn btn-delete" onclick="deleteTask(${task.id})">
-          🗑️ Excluir
+          <i class="fas fa-trash"></i>
+          Excluir
         </button>
       </div>
     </div>
@@ -436,17 +454,29 @@ function updateStatistics() {
   elements.tarefasPendentes.textContent = pendentes;
   elements.tarefasConcluidas.textContent = concluidas;
 
-  // Atualizar barra de progresso
-  elements.progressFill.style.width = `${progress}%`;
-  elements.progressText.textContent = `${progress}% concluído`;
+  // Atualizar porcentagem de progresso
+  const progressElement = document.getElementById("progress-percentage");
+  if (progressElement) {
+    progressElement.textContent = `${progress}%`;
+  }
 
-  // Atualizar produtividade (simulado)
-  const productivity = Math.round(total / 7); // Média por dia
-  elements.productivity.textContent = `${productivity} tarefas/dia`;
+  // Atualizar contador de tarefas
+  const tasksCountElement = document.getElementById("tasks-count");
+  if (tasksCountElement) {
+    const count =
+      currentFilter === "todas"
+        ? total
+        : currentFilter === "pendentes"
+        ? pendentes
+        : concluidas;
+    tasksCountElement.textContent = `${count} tarefa${count !== 1 ? "s" : ""}`;
+  }
 
-  // Atualizar meta diária
-  const dailyGoal = Math.min(pendentes, 5);
-  elements.dailyGoal.textContent = `${dailyGoal}/5 tarefas`;
+  // Atualizar nome do usuário
+  const userNameElement = document.getElementById("user-name");
+  if (userNameElement && currentUser) {
+    userNameElement.textContent = currentUser.nome || "Usuário";
+  }
 }
 
 // Mostrar/esconder loading
@@ -456,6 +486,20 @@ function showLoading(show) {
 
 // Mostrar toast
 function showToast(message, type = "info") {
+  const toastIcon = elements.toast.querySelector(".toast-icon i");
+
+  // Definir ícone baseado no tipo
+  switch (type) {
+    case "success":
+      toastIcon.className = "fas fa-check-circle";
+      break;
+    case "error":
+      toastIcon.className = "fas fa-exclamation-circle";
+      break;
+    default:
+      toastIcon.className = "fas fa-info-circle";
+  }
+
   elements.toastMessage.textContent = message;
   elements.toast.className = `toast ${type}`;
   elements.toast.style.display = "flex";
@@ -469,9 +513,10 @@ function hideToast() {
   elements.toast.style.display = "none";
 }
 
-// Setup smooth scrolling
+// Setup smooth scrolling e navegação
 function setupSmoothScrolling() {
   const links = document.querySelectorAll('a[href^="#"]');
+  const navLinks = document.querySelectorAll(".nav-link");
 
   links.forEach((link) => {
     link.addEventListener("click", function (e) {
@@ -481,13 +526,41 @@ function setupSmoothScrolling() {
       const targetSection = document.querySelector(targetId);
 
       if (targetSection) {
+        // Atualizar link ativo
+        navLinks.forEach((nav) => nav.classList.remove("active"));
+        const activeNav = document.querySelector(`[href="${targetId}"]`);
+        if (activeNav) {
+          activeNav.classList.add("active");
+        }
+
+        // Scroll suave
         const headerHeight = document.querySelector(".header").offsetHeight;
-        const targetPosition = targetSection.offsetTop - headerHeight;
+        const targetPosition = targetSection.offsetTop - headerHeight - 20;
 
         window.scrollTo({
           top: targetPosition,
           behavior: "smooth",
         });
+      }
+    });
+  });
+
+  // Scroll spy para atualizar navegação
+  window.addEventListener("scroll", () => {
+    const sections = document.querySelectorAll("section[id]");
+    const scrollPos = window.scrollY + 100;
+
+    sections.forEach((section) => {
+      const sectionTop = section.offsetTop;
+      const sectionHeight = section.offsetHeight;
+      const sectionId = section.getAttribute("id");
+
+      if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+        navLinks.forEach((nav) => nav.classList.remove("active"));
+        const activeNav = document.querySelector(`[href="#${sectionId}"]`);
+        if (activeNav) {
+          activeNav.classList.add("active");
+        }
       }
     });
   });
@@ -542,3 +615,18 @@ async function testAPIConnection() {
 window.addEventListener("load", function () {
   setTimeout(testAPIConnection, 1000);
 });
+
+// Função de logout global
+function logout() {
+  // Limpar dados locais
+  localStorage.removeItem("auth_token");
+  localStorage.removeItem("current_user");
+  authToken = null;
+  currentUser = null;
+
+  // Redirecionar para login
+  window.location.href = "login.html";
+}
+
+// Exportar função de logout para uso global
+window.logout = logout;

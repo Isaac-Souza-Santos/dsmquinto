@@ -1,6 +1,8 @@
 from flask import request
 from flask_restx import Resource, Namespace
 from datetime import datetime
+from src.utils.role_middleware import require_permission, require_manager_or_admin
+from src.utils.auth_middleware import require_auth
 
 def create_routes(api):
     """Cria as rotas da API de tarefas"""
@@ -19,8 +21,12 @@ def create_routes(api):
     class TarefasList(Resource):
         @api_ns.doc('listar_tarefas')
         @api_ns.response(200, 'Sucesso', tarefa_lista_model)
+        @api_ns.response(401, 'Token inválido')
+        @api_ns.response(403, 'Permissão insuficiente')
+        @require_auth
+        @require_permission('tarefas:list')
         def get(self):
-            """Listar todas as tarefas"""
+            """Listar todas as tarefas (requer permissão de visualização)"""
             try:
                 conn = get_db_connection()
                 cursor = conn.cursor()
@@ -52,8 +58,12 @@ def create_routes(api):
         @api_ns.expect(tarefa_model)
         @api_ns.response(201, 'Tarefa criada com sucesso', tarefa_resposta_model)
         @api_ns.response(400, 'Erro de validação')
+        @api_ns.response(401, 'Token inválido')
+        @api_ns.response(403, 'Permissão insuficiente')
+        @require_auth
+        @require_permission('tarefas:create')
         def post(self):
-            """Criar nova tarefa"""
+            """Criar nova tarefa (requer permissão de criação)"""
             try:
                 dados = request.get_json()
                 if not dados or 'titulo' not in dados:
@@ -97,8 +107,12 @@ def create_routes(api):
         @api_ns.doc('obter_tarefa')
         @api_ns.response(200, 'Sucesso', tarefa_resposta_model)
         @api_ns.response(404, 'Tarefa não encontrada')
+        @api_ns.response(401, 'Token inválido')
+        @api_ns.response(403, 'Permissão insuficiente')
+        @require_auth
+        @require_permission('tarefas:read')
         def get(self, id):
-            """Obter tarefa por ID"""
+            """Obter tarefa por ID (requer permissão de leitura)"""
             try:
                 conn = get_db_connection()
                 cursor = conn.cursor()
@@ -127,8 +141,12 @@ def create_routes(api):
         @api_ns.response(200, 'Tarefa atualizada com sucesso', tarefa_resposta_model)
         @api_ns.response(400, 'Erro de validação')
         @api_ns.response(404, 'Tarefa não encontrada')
+        @api_ns.response(401, 'Token inválido')
+        @api_ns.response(403, 'Permissão insuficiente')
+        @require_auth
+        @require_permission('tarefas:update')
         def put(self, id):
-            """Atualizar tarefa por ID"""
+            """Atualizar tarefa por ID (requer permissão de atualização)"""
             try:
                 dados = request.get_json()
                 if not dados:
@@ -179,8 +197,12 @@ def create_routes(api):
         @api_ns.doc('remover_tarefa')
         @api_ns.response(200, 'Tarefa removida com sucesso', mensagem_model)
         @api_ns.response(404, 'Tarefa não encontrada')
+        @api_ns.response(401, 'Token inválido')
+        @api_ns.response(403, 'Permissão insuficiente')
+        @require_auth
+        @require_permission('tarefas:delete')
         def delete(self, id):
-            """Remover tarefa por ID"""
+            """Remover tarefa por ID (requer permissão de exclusão)"""
             try:
                 conn = get_db_connection()
                 cursor = conn.cursor()

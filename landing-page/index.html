@@ -3,176 +3,276 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DPM - Gerenciador de Tarefas</title>
+    <title>DPM - Dashboard de Produtividade</title>
     <link rel="stylesheet" href="css/styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
   </head>
   <body>
-    <!-- Header Fixo -->
+    <!-- Header Moderno -->
     <header class="header">
       <div class="container">
         <div class="logo">
-          <h1>DPM</h1>
-          <span class="logo-subtitle">Task Manager</span>
+          <div class="logo-icon">
+            <i class="fas fa-tasks"></i>
+          </div>
+          <div class="logo-text">
+            <h1>DPM</h1>
+            <span>Dashboard</span>
+          </div>
         </div>
         <nav class="nav">
-          <ul>
-            <li><a href="#tarefas">Minhas Tarefas</a></li>
-            <li><a href="#nova-tarefa">Nova Tarefa</a></li>
-            <li><a href="#estatisticas">Estatísticas</a></li>
-            <li><button onclick="logout()" class="logout-btn">Sair</button></li>
-          </ul>
+          <div class="nav-links">
+            <a href="#dashboard" class="nav-link active">
+              <i class="fas fa-chart-pie"></i>
+              <span>Dashboard</span>
+            </a>
+            <a href="#tarefas" class="nav-link">
+              <i class="fas fa-list-check"></i>
+              <span>Tarefas</span>
+            </a>
+            <a href="#nova-tarefa" class="nav-link">
+              <i class="fas fa-plus"></i>
+              <span>Nova Tarefa</span>
+            </a>
+          </div>
+          <div class="user-menu">
+            <div class="user-info">
+              <span id="user-name">Usuário</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <button onclick="logout()" class="logout-btn">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Sair</span>
+            </button>
+          </div>
         </nav>
       </div>
     </header>
 
-    <!-- Seção Hero - 100vh -->
-    <section id="hero" class="hero">
+    <!-- Dashboard Principal -->
+    <main class="main-content">
       <div class="container">
-        <div class="hero-content">
-          <h2 class="hero-title">Gerencie suas Tarefas</h2>
-          <p class="hero-text">
-            Organize, acompanhe e complete suas atividades diárias com
-            facilidade. Sistema inteligente para aumentar sua produtividade.
-          </p>
-          <div class="hero-stats">
-            <div class="stat-item">
-              <span class="stat-number" id="total-tarefas">0</span>
-              <span class="stat-label">Total</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-number" id="tarefas-pendentes">0</span>
-              <span class="stat-label">Pendentes</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-number" id="tarefas-concluidas">0</span>
-              <span class="stat-label">Concluídas</span>
-            </div>
+        <!-- Layout de Duas Colunas -->
+        <div class="main-layout">
+          <!-- Coluna Esquerda - Dashboard -->
+          <div class="dashboard-column">
+            <section id="dashboard" class="dashboard-section">
+              <div class="dashboard-header">
+                <h2>Dashboard</h2>
+                <div class="dashboard-actions">
+                  <button class="btn-refresh" onclick="location.reload()">
+                    <i class="fas fa-sync-alt"></i>
+                    Atualizar
+                  </button>
+                </div>
+              </div>
+
+              <div class="stats-grid-vertical">
+                <div class="stat-card primary">
+                  <div class="stat-icon">
+                    <i class="fas fa-tasks"></i>
+                  </div>
+                  <div class="stat-content">
+                    <h3 id="total-tarefas">0</h3>
+                    <p>Total de Tarefas</p>
+                  </div>
+                </div>
+
+                <div class="stat-card warning">
+                  <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                  </div>
+                  <div class="stat-content">
+                    <h3 id="tarefas-pendentes">0</h3>
+                    <p>Pendentes</p>
+                  </div>
+                </div>
+
+                <div class="stat-card success">
+                  <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                  </div>
+                  <div class="stat-content">
+                    <h3 id="tarefas-concluidas">0</h3>
+                    <p>Concluídas</p>
+                  </div>
+                </div>
+
+                <div class="stat-card info">
+                  <div class="stat-icon">
+                    <i class="fas fa-percentage"></i>
+                  </div>
+                  <div class="stat-content">
+                    <h3 id="progress-percentage">0%</h3>
+                    <p>Progresso</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Coluna Direita - Formulário Nova Tarefa -->
+          <div class="form-column">
+            <section id="nova-tarefa" class="new-task-section">
+              <div class="new-task-header">
+                <h2>
+                  <i class="fas fa-plus-circle"></i>
+                  Nova Tarefa
+                </h2>
+                <p>Adicione uma nova tarefa para organizar seu trabalho</p>
+              </div>
+
+              <div class="task-form-container">
+                <form id="new-task-form" class="task-form">
+                  <div class="form-group">
+                    <label for="task-title">
+                      <i class="fas fa-heading"></i>
+                      Título da Tarefa *
+                    </label>
+                    <input
+                      type="text"
+                      id="task-title"
+                      name="titulo"
+                      placeholder="Ex: Estudar Python, Reunião com cliente..."
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="task-status">
+                      <i class="fas fa-flag"></i>
+                      Status
+                    </label>
+                    <select id="task-status" name="status">
+                      <option value="pendente">Pendente</option>
+                      <option value="concluida">Concluída</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="task-description">
+                      <i class="fas fa-align-left"></i>
+                      Descrição (opcional)
+                    </label>
+                    <textarea
+                      id="task-description"
+                      name="descricao"
+                      placeholder="Adicione detalhes sobre a tarefa, notas importantes ou contexto adicional..."
+                      rows="4"
+                    ></textarea>
+                  </div>
+
+                  <div class="form-actions">
+                    <button
+                      type="button"
+                      class="btn-secondary"
+                      onclick="document.getElementById('new-task-form').reset()"
+                    >
+                      <i class="fas fa-times"></i>
+                      Limpar
+                    </button>
+                    <button type="submit" class="submit-btn">
+                      <span class="btn-text">
+                        <i class="fas fa-plus"></i>
+                        Criar Tarefa
+                      </span>
+                      <span class="btn-loading" style="display: none">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Criando...
+                      </span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </section>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- Seção de Tarefas -->
-    <section id="tarefas" class="tasks-section">
-      <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">Minhas Tarefas</h2>
-          <div class="filters">
-            <button class="filter-btn active" data-filter="todas">Todas</button>
-            <button class="filter-btn" data-filter="pendentes">
-              Pendentes
-            </button>
-            <button class="filter-btn" data-filter="concluidas">
-              Concluídas
-            </button>
-          </div>
-        </div>
-
-        <div class="tasks-container">
-          <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <p>Carregando tarefas...</p>
-          </div>
-
-          <div id="tasks-list" class="tasks-list" style="display: none">
-            <!-- Tarefas serão inseridas aqui via JavaScript -->
-          </div>
-
-          <div id="no-tasks" class="no-tasks" style="display: none">
-            <p>Nenhuma tarefa encontrada. Crie sua primeira tarefa!</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Seção Nova Tarefa -->
-    <section id="nova-tarefa" class="new-task-section">
-      <div class="container">
-        <h2 class="section-title">Criar Nova Tarefa</h2>
-        <form id="new-task-form" class="task-form">
-          <div class="form-group">
-            <label for="task-title">Título da Tarefa *</label>
-            <input
-              type="text"
-              id="task-title"
-              name="titulo"
-              placeholder="Ex: Estudar Python"
-              required
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="task-description">Descrição (opcional)</label>
-            <textarea
-              id="task-description"
-              name="descricao"
-              placeholder="Detalhes da tarefa..."
-              rows="3"
-            ></textarea>
-          </div>
-
-          <div class="form-group">
-            <label for="task-status">Status</label>
-            <select id="task-status" name="status">
-              <option value="pendente">Pendente</option>
-              <option value="concluida">Concluída</option>
-            </select>
-          </div>
-
-          <button type="submit" class="submit-btn">
-            <span class="btn-text">Criar Tarefa</span>
-            <span class="btn-loading" style="display: none">Criando...</span>
-          </button>
-        </form>
-      </div>
-    </section>
-
-    <!-- Seção Estatísticas -->
-    <section id="estatisticas" class="stats-section">
-      <div class="container">
-        <h2 class="section-title">Estatísticas</h2>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">📊</div>
-            <h3>Progresso Geral</h3>
-            <div class="progress-bar">
-              <div class="progress-fill" id="progress-fill"></div>
+        <!-- Seção de Tarefas -->
+        <section id="tarefas" class="tasks-section">
+          <div class="tasks-header">
+            <div class="tasks-title">
+              <h2>
+                <i class="fas fa-list-check"></i>
+                Minhas Tarefas
+              </h2>
+              <span id="tasks-count" class="tasks-count">0 tarefas</span>
             </div>
-            <p class="progress-text" id="progress-text">0% concluído</p>
+            <div class="filters">
+              <button class="filter-btn active" data-filter="todas">
+                <i class="fas fa-list"></i>
+                Todas
+              </button>
+              <button class="filter-btn" data-filter="pendentes">
+                <i class="fas fa-clock"></i>
+                Pendentes
+              </button>
+              <button class="filter-btn" data-filter="concluidas">
+                <i class="fas fa-check"></i>
+                Concluídas
+              </button>
+            </div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-icon">⚡</div>
-            <h3>Produtividade</h3>
-            <p class="stat-value" id="productivity">0 tarefas/dia</p>
-            <small>Média dos últimos 7 dias</small>
-          </div>
+          <div class="tasks-container">
+            <div id="loading" class="loading">
+              <div class="spinner"></div>
+              <p>Carregando tarefas...</p>
+            </div>
 
-          <div class="stat-card">
-            <div class="stat-icon">🎯</div>
-            <h3>Meta Diária</h3>
-            <p class="stat-value" id="daily-goal">0/5 tarefas</p>
-            <small>Objetivo: 5 tarefas por dia</small>
+            <div id="tasks-list" class="tasks-list" style="display: none">
+              <!-- Tarefas serão inseridas aqui via JavaScript -->
+            </div>
+
+            <div id="no-tasks" class="no-tasks" style="display: none">
+              <div class="no-tasks-icon">
+                <i class="fas fa-clipboard-list"></i>
+              </div>
+              <h3>Nenhuma tarefa encontrada</h3>
+              <p>Crie sua primeira tarefa para começar a organizar seu dia!</p>
+              <a href="#nova-tarefa" class="btn-primary">
+                <i class="fas fa-plus"></i>
+                Criar Primeira Tarefa
+              </a>
+            </div>
           </div>
-        </div>
+        </section>
       </div>
-    </section>
+    </main>
 
     <!-- Modal de Edição -->
     <div id="edit-modal" class="modal" style="display: none">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>Editar Tarefa</h3>
-          <button class="close-btn" id="close-modal">&times;</button>
+          <h3>
+            <i class="fas fa-edit"></i>
+            Editar Tarefa
+          </h3>
+          <button class="close-btn" id="close-modal">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
         <form id="edit-task-form" class="task-form">
           <input type="hidden" id="edit-task-id" name="id" />
           <div class="form-group">
-            <label for="edit-task-title">Título</label>
+            <label for="edit-task-title">
+              <i class="fas fa-heading"></i>
+              Título
+            </label>
             <input type="text" id="edit-task-title" name="titulo" required />
           </div>
           <div class="form-group">
-            <label for="edit-task-description">Descrição</label>
+            <label for="edit-task-description">
+              <i class="fas fa-align-left"></i>
+              Descrição
+            </label>
             <textarea
               id="edit-task-description"
               name="descricao"
@@ -180,7 +280,10 @@
             ></textarea>
           </div>
           <div class="form-group">
-            <label for="edit-task-status">Status</label>
+            <label for="edit-task-status">
+              <i class="fas fa-flag"></i>
+              Status
+            </label>
             <select id="edit-task-status" name="status">
               <option value="pendente">Pendente</option>
               <option value="concluida">Concluída</option>
@@ -188,9 +291,13 @@
           </div>
           <div class="modal-actions">
             <button type="button" class="btn-secondary" id="cancel-edit">
+              <i class="fas fa-times"></i>
               Cancelar
             </button>
-            <button type="submit" class="btn-primary">Salvar</button>
+            <button type="submit" class="btn-primary">
+              <i class="fas fa-save"></i>
+              Salvar Alterações
+            </button>
           </div>
         </form>
       </div>
@@ -198,8 +305,13 @@
 
     <!-- Toast de Notificação -->
     <div id="toast" class="toast" style="display: none">
+      <div class="toast-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
       <span id="toast-message"></span>
-      <button class="toast-close">&times;</button>
+      <button class="toast-close">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
 
     <script src="js/main.js"></script>
