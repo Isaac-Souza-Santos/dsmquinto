@@ -1,8 +1,11 @@
 """
 Sistema de Permissões e Níveis de Acesso
+Usa o padrão Strategy para autorização
 """
 
-# Níveis de acesso disponíveis
+from src.utils.authorization_strategy import create_authorization_context
+
+# Níveis de acesso disponíveis (mantido para compatibilidade)
 NIVEIS_ACESSO = {
     'visualizacao': {
         'nome': 'Visualização',
@@ -51,6 +54,7 @@ NIVEIS_ACESSO = {
 def verificar_permissao(nivel_usuario, permissao_necessaria):
     """
     Verifica se um usuário tem permissão para uma ação específica
+    Usa o padrão Strategy internamente
     
     Args:
         nivel_usuario (str): Nível de acesso do usuário
@@ -59,10 +63,11 @@ def verificar_permissao(nivel_usuario, permissao_necessaria):
     Returns:
         bool: True se tem permissão, False caso contrário
     """
-    if nivel_usuario not in NIVEIS_ACESSO:
+    try:
+        context = create_authorization_context(nivel_usuario)
+        return context.can_perform_action(permissao_necessaria)
+    except (ValueError, AttributeError):
         return False
-    
-    return permissao_necessaria in NIVEIS_ACESSO[nivel_usuario]['permissoes']
 
 def verificar_nivel_minimo(nivel_usuario, nivel_minimo):
     """
@@ -83,6 +88,7 @@ def verificar_nivel_minimo(nivel_usuario, nivel_minimo):
 def obter_permissoes_usuario(nivel_usuario):
     """
     Retorna todas as permissões de um usuário
+    Usa o padrão Strategy internamente
     
     Args:
         nivel_usuario (str): Nível de acesso do usuário
@@ -90,10 +96,11 @@ def obter_permissoes_usuario(nivel_usuario):
     Returns:
         list: Lista de permissões do usuário
     """
-    if nivel_usuario not in NIVEIS_ACESSO:
+    try:
+        context = create_authorization_context(nivel_usuario)
+        return context.get_allowed_actions()
+    except (ValueError, AttributeError):
         return []
-    
-    return NIVEIS_ACESSO[nivel_usuario]['permissoes']
 
 def obter_niveis_disponiveis():
     """

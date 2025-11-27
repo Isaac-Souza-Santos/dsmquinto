@@ -18,13 +18,21 @@ dpm/
 │   ├── api/
 │   │   └── app.py          # Configuração da aplicação Flask
 │   ├── models/
-│   │   └── tarefa.py       # Modelos e banco de dados
+│   │   ├── tarefa.py       # Modelos e banco de dados
+│   │   └── usuario.py      # Modelo de usuário e autenticação
 │   ├── routes/
-│   │   └── api.py          # Rotas da API
+│   │   ├── api.py          # Rotas da API
+│   │   ├── auth.py         # Rotas de autenticação
+│   │   └── usuarios.py     # Rotas de usuários
 │   └── utils/
-│       └── helpers.py      # Utilitários
+│       ├── helpers.py      # Utilitários
+│       ├── permissions.py   # Sistema de permissões
+│       ├── authorization_strategy.py  # Padrão Strategy
+│       ├── auth_middleware.py          # Middleware de autenticação
+│       └── role_middleware.py          # Middleware de autorização
 ├── main.py                 # Ponto de entrada
 ├── requirements.txt        # Dependências
+├── examples_strategy.py    # Exemplos do padrão Strategy
 └── tarefas.db             # Banco SQLite (criado automaticamente)
 ```
 
@@ -203,6 +211,80 @@ curl -X DELETE http://localhost:5000/tarefas/1
 - **Flask-RESTX**: Extensão para APIs REST com Swagger
 - **SQLite**: Banco de dados embutido
 - **Python**: Linguagem de programação
+
+## 🎯 Design Patterns Implementados
+
+### Categorias de Design Patterns
+
+Os Design Patterns são organizados em 3 categorias principais:
+
+1. **Criacionais (Creational)** - Como objetos são criados
+
+   - Singleton, Factory Method, Abstract Factory, Builder, Prototype
+
+2. **Estruturais (Structural)** - Como objetos e classes se organizam
+
+   - Adapter, Facade, Decorator, Proxy, Composite, Bridge
+
+3. **Comportamentais (Behavioral)** - Como objetos interagem e se comunicam
+   - Observer, Strategy, Command, State, Chain of Responsibility, Mediator, Template Method, Iterator, Memento
+
+### Strategy Pattern (Padrão Estratégia)
+
+**Categoria:** Comportamental (Behavioral Pattern)
+
+O projeto implementa o **padrão Strategy** para o sistema de autorização e permissões. Este padrão comportamental permite definir diferentes estratégias de autorização para cada nível de acesso, permitindo que o algoritmo de autorização varie independentemente dos clientes que o utilizam.
+
+#### Estrutura
+
+```
+AuthorizationStrategy (Interface)
+├── VisualizacaoStrategy    → Apenas leitura
+├── GerencialStrategy       → Gerenciar tarefas e usuários
+└── AdministrativoStrategy  → Acesso total
+```
+
+#### Arquivos
+
+- `src/utils/authorization_strategy.py` - Implementação do padrão Strategy
+- `src/utils/permissions.py` - Usa Strategy internamente
+- `examples_strategy.py` - Exemplos de uso
+
+#### Como Funciona
+
+1. Cada nível de acesso possui sua própria estratégia
+2. O `AuthorizationContext` seleciona a estratégia apropriada
+3. As rotas usam `@require_permission()` que internamente usa Strategy
+4. Fácil adicionar novos níveis sem modificar código existente
+
+#### Exemplo de Uso
+
+```python
+from src.utils.authorization_strategy import create_authorization_context
+
+# Criar contexto para usuário gerencial
+context = create_authorization_context('gerencial')
+
+# Verificar permissão
+pode_criar = context.can_perform_action('tarefas:create')  # True
+pode_admin = context.can_perform_action('system:admin')      # False
+
+# Obter todas as permissões
+permissoes = context.get_allowed_actions()
+```
+
+#### Benefícios
+
+- Código isolado e testável
+- Fácil manutenção e extensão
+- Cada estratégia pode evoluir independentemente
+- Compatibilidade mantida com código existente
+
+#### Testar o Padrão
+
+```bash
+python examples_strategy.py
+```
 
 ## 📝 Notas
 
