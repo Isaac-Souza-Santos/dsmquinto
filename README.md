@@ -229,7 +229,74 @@ Os Design Patterns são organizados em 3 categorias principais:
 3. **Comportamentais (Behavioral)** - Como objetos interagem e se comunicam
    - Observer, Strategy, Command, State, Chain of Responsibility, Mediator, Template Method, Iterator, Memento
 
-### Strategy Pattern (Padrão Estratégia)
+### 1. Factory Method Pattern (Padrão Método Fábrica)
+
+**Categoria:** Criacional (Creational Pattern)
+
+O projeto usa o **padrão Factory Method** para criar objetos complexos de forma centralizada. As funções factory encapsulam a lógica de criação e configuração.
+
+#### Onde é usado:
+
+- `create_app()` - Cria e configura a aplicação Flask
+- `create_routes()` - Cria rotas da API de tarefas
+- `create_auth_routes()` - Cria rotas de autenticação
+- `create_user_routes()` - Cria rotas de usuários
+- `create_models()` - Cria modelos para Swagger
+- `Usuario.criar()` - Factory method para criar usuários
+
+#### Exemplo:
+
+```python
+# Factory Method para criar aplicação
+app, api = create_app()
+
+# Factory Method para criar rotas
+api_ns = create_routes(api)
+api.add_namespace(api_ns)
+```
+
+#### Benefícios:
+
+- Encapsula lógica de criação complexa
+- Facilita manutenção e testes
+- Permite variações na criação sem modificar código cliente
+
+---
+
+### 2. Decorator Pattern (Padrão Decorador)
+
+**Categoria:** Estrutural (Structural Pattern)
+
+O projeto implementa o **padrão Decorator** através de decoradores Python para adicionar funcionalidades de autenticação e autorização às rotas sem modificar seu código.
+
+#### Onde é usado:
+
+- `@require_auth` - Decorator para autenticação obrigatória
+- `@require_permission()` - Decorator para verificar permissões
+- `@require_role()` - Decorator para verificar nível de acesso
+- `@require_admin` - Decorator para acesso administrativo
+
+#### Exemplo:
+
+```python
+@api_ns.route('/')
+class TarefasList(Resource):
+    @require_auth
+    @require_permission('tarefas:list')
+    def get(self):
+        # Lógica da rota
+        pass
+```
+
+#### Benefícios:
+
+- Adiciona funcionalidades sem modificar código existente
+- Composição flexível de decoradores
+- Separação de responsabilidades (autenticação/autorização)
+
+---
+
+### 3. Strategy Pattern (Padrão Estratégia)
 
 **Categoria:** Comportamental (Behavioral Pattern)
 
