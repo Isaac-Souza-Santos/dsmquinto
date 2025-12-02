@@ -10,7 +10,7 @@ def create_models(api):
     tarefa_model = api.model('Tarefa', {
         'titulo': fields.String(required=True, description='Título da tarefa'),
         'descricao': fields.String(description='Descrição da tarefa'),
-        'status': fields.String(enum=['pendente', 'concluida'], description='Status da tarefa', default='pendente')
+        'status': fields.String(enum=['pendente', 'em_progresso', 'concluida'], description='Status da tarefa', default='pendente')
     })
     
     # Modelo para resposta de tarefa

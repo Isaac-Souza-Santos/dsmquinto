@@ -17,6 +17,28 @@ function buildApiUrl(endpoint, id = null) {
   return endpoint;
 }
 
+// Função auxiliar para obter headers com autenticação
+function getAuthHeaders(customHeaders = {}) {
+  // Garantir que o token está carregado
+  if (!authToken) {
+    authToken = localStorage.getItem("auth_token");
+  }
+
+  const headers = {
+    Accept: "application/json",
+    ...customHeaders,
+  };
+
+  // Adicionar Authorization apenas se o token existir
+  if (authToken) {
+    headers.Authorization = `Bearer ${authToken}`;
+  } else {
+    console.warn("⚠️ Token não encontrado! A requisição pode falhar.");
+  }
+
+  return headers;
+}
+
 // Estado global da aplicação
 let tasks = [];
 let currentFilter = "todas";
@@ -124,10 +146,7 @@ async function loadTasks() {
 
     const response = await fetch(API_ENDPOINTS.tarefas, {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
+      headers: getAuthHeaders(),
       mode: "cors",
       credentials: "same-origin",
     });
@@ -258,11 +277,9 @@ async function handleCreateTask(event) {
 
     const response = await fetch(API_ENDPOINTS.tarefas, {
       method: "POST",
-      headers: {
+      headers: getAuthHeaders({
         "Content-Type": "application/json",
-        Accept: "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
+      }),
       mode: "cors",
       credentials: "same-origin",
       body: JSON.stringify(taskData),
@@ -330,11 +347,9 @@ async function handleEditTask(event) {
   try {
     const response = await fetch(buildApiUrl(API_ENDPOINTS.tarefas, taskId), {
       method: "PUT",
-      headers: {
+      headers: getAuthHeaders({
         "Content-Type": "application/json",
-        Accept: "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
+      }),
       mode: "cors",
       credentials: "same-origin",
       body: JSON.stringify(taskData),
@@ -373,11 +388,9 @@ async function toggleTaskStatus(taskId) {
   try {
     const response = await fetch(buildApiUrl(API_ENDPOINTS.tarefas, taskId), {
       method: "PUT",
-      headers: {
+      headers: getAuthHeaders({
         "Content-Type": "application/json",
-        Accept: "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
+      }),
       mode: "cors",
       credentials: "same-origin",
       body: JSON.stringify({
@@ -417,10 +430,7 @@ async function deleteTask(taskId) {
   try {
     const response = await fetch(buildApiUrl(API_ENDPOINTS.tarefas, taskId), {
       method: "DELETE",
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
+      headers: getAuthHeaders(),
       mode: "cors",
       credentials: "same-origin",
     });
@@ -581,9 +591,7 @@ async function testAPIConnection() {
 
     const response = await fetch(API_ENDPOINTS.tarefas, {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: getAuthHeaders(),
       mode: "cors",
       credentials: "same-origin",
     });
@@ -591,11 +599,18 @@ async function testAPIConnection() {
     if (response.ok) {
       console.log("✅ API está funcionando!");
       console.log("📊 Status:", response.status);
-      console.log(
-        "🔗 Headers:",
-        Object.fromEntries(response.headers.entries())
-      );
       return true;
+    } else if (response.status === 401) {
+      // Se for 401, pode ser porque não há token (normal se não estiver logado)
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        console.log(
+          "ℹ️ API está funcionando, mas é necessário fazer login para acessar tarefas"
+        );
+      } else {
+        console.log("⚠️ Token inválido ou expirado. Faça login novamente.");
+      }
+      return true; // API está funcionando, só precisa de autenticação
     } else {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }

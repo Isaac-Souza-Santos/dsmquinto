@@ -3,7 +3,7 @@ import sqlite3
 import os
 import pyotp
 import qrcode
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -49,7 +49,7 @@ def create_auth_models(api):
 
 def init_auth_database():
     """Inicializa as tabelas de autenticação"""
-    db_path = 'tarefas.db'
+    db_path = os.environ.get('DATABASE_PATH', 'tarefas.db')
     
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -92,7 +92,8 @@ def init_auth_database():
 
 def get_db_connection():
     """Retorna uma conexão com o banco de dados"""
-    return sqlite3.connect('tarefas.db')
+    db_path = os.environ.get('DATABASE_PATH', 'tarefas.db')
+    return sqlite3.connect(db_path)
 
 class Usuario:
     def __init__(self, id=None, nome=None, email=None, senha_hash=None, secret_2fa=None, nivel_acesso='visualizacao', ativo=True, data_criacao=None):
@@ -203,29 +204,34 @@ class Usuario:
         payload = {
             'user_id': self.id,
             'email': self.email,
-            'exp': datetime.utcnow() + timedelta(days=7)
+            'exp': datetime.now(timezone.utc) + timedelta(days=7)
         }
         
         # Usar secret do config ou padrão
         secret = os.environ.get('JWT_SECRET', 'dev-secret-key')
         token = jwt.encode(payload, secret, algorithm='HS256')
         
+        # Converter para string se necessário (PyJWT retorna string ou bytes)
+        if isinstance(token, bytes):
+            token = token.decode('utf-8')
+        token_str = str(token)
+        
         # Salvar token na sessão
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        expires_at = (datetime.utcnow() + timedelta(days=7)).isoformat()
-        data_atual = datetime.now().isoformat()
+        expires_at = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+        data_atual = datetime.now(timezone.utc).isoformat()
         
         cursor.execute('''
             INSERT INTO sessoes (usuario_id, token, expires_at, data_criacao)
             VALUES (?, ?, ?, ?)
-        ''', (self.id, token, expires_at, data_atual))
+        ''', (self.id, token_str, expires_at, data_atual))
         
         conn.commit()
         conn.close()
         
-        return token
+        return token_str
     
     @staticmethod
     def verificar_jwt_token(token):
@@ -238,11 +244,13 @@ class Usuario:
             conn = get_db_connection()
             cursor = conn.cursor()
             
+            # Buscar sessão - comparação de string ISO funciona bem no SQLite
+            now_iso = datetime.now(timezone.utc).isoformat()
             cursor.execute('''
                 SELECT s.*, u.* FROM sessoes s
                 JOIN usuarios u ON s.usuario_id = u.id
                 WHERE s.token = ? AND s.ativo = 1 AND s.expires_at > ?
-            ''', (token, datetime.now().isoformat()))
+            ''', (token, now_iso))
             
             sessao_data = cursor.fetchone()
             conn.close()
@@ -264,6 +272,11 @@ class Usuario:
             return None
         except jwt.InvalidTokenError:
             return None
+    
+    @staticmethod
+    def get_db_connection():
+        """Retorna uma conexão com o banco de dados (método estático para compatibilidade)"""
+        return get_db_connection()
     
     def to_dict(self):
         """Converte usuário para dicionário"""

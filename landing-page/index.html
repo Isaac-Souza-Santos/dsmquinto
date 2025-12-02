@@ -61,8 +61,9 @@
       <div class="container">
         <!-- Layout de Duas Colunas -->
         <div class="main-layout">
-          <!-- Coluna Esquerda - Dashboard -->
-          <div class="dashboard-column">
+          <!-- Coluna Esquerda - Dashboard e Tarefas -->
+          <div class="left-column">
+            <!-- Dashboard Section -->
             <section id="dashboard" class="dashboard-section">
               <div class="dashboard-header">
                 <h2>Dashboard</h2>
@@ -116,10 +117,63 @@
                 </div>
               </div>
             </section>
+
+            <!-- Seção de Tarefas -->
+            <section id="tarefas" class="tasks-section">
+              <div class="tasks-header">
+                <div class="tasks-title">
+                  <h2>
+                    <i class="fas fa-list-check"></i>
+                    Minhas Tarefas
+                  </h2>
+                  <span id="tasks-count" class="tasks-count">0 tarefas</span>
+                </div>
+                <div class="filters">
+                  <button class="filter-btn active" data-filter="todas">
+                    <i class="fas fa-list"></i>
+                    Todas
+                  </button>
+                  <button class="filter-btn" data-filter="pendentes">
+                    <i class="fas fa-clock"></i>
+                    Pendentes
+                  </button>
+                  <button class="filter-btn" data-filter="concluidas">
+                    <i class="fas fa-check"></i>
+                    Concluídas
+                  </button>
+                </div>
+              </div>
+
+              <div class="tasks-container">
+                <div id="loading" class="loading">
+                  <div class="spinner"></div>
+                  <p>Carregando tarefas...</p>
+                </div>
+
+                <div id="tasks-list" class="tasks-list" style="display: none">
+                  <!-- Tarefas serão inseridas aqui via JavaScript -->
+                </div>
+
+                <div id="no-tasks" class="no-tasks" style="display: none">
+                  <div class="no-tasks-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                  </div>
+                  <h3>Nenhuma tarefa encontrada</h3>
+                  <p>
+                    Crie sua primeira tarefa para começar a organizar seu dia!
+                  </p>
+                  <a href="#nova-tarefa" class="btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Criar Primeira Tarefa
+                  </a>
+                </div>
+              </div>
+            </section>
           </div>
 
-          <!-- Coluna Direita - Formulário Nova Tarefa -->
-          <div class="form-column">
+          <!-- Coluna Direita - Formulário -->
+          <div class="right-column">
+            <!-- Formulário Nova Tarefa -->
             <section id="nova-tarefa" class="new-task-section">
               <div class="new-task-header">
                 <h2>
@@ -194,56 +248,6 @@
             </section>
           </div>
         </div>
-
-        <!-- Seção de Tarefas -->
-        <section id="tarefas" class="tasks-section">
-          <div class="tasks-header">
-            <div class="tasks-title">
-              <h2>
-                <i class="fas fa-list-check"></i>
-                Minhas Tarefas
-              </h2>
-              <span id="tasks-count" class="tasks-count">0 tarefas</span>
-            </div>
-            <div class="filters">
-              <button class="filter-btn active" data-filter="todas">
-                <i class="fas fa-list"></i>
-                Todas
-              </button>
-              <button class="filter-btn" data-filter="pendentes">
-                <i class="fas fa-clock"></i>
-                Pendentes
-              </button>
-              <button class="filter-btn" data-filter="concluidas">
-                <i class="fas fa-check"></i>
-                Concluídas
-              </button>
-            </div>
-          </div>
-
-          <div class="tasks-container">
-            <div id="loading" class="loading">
-              <div class="spinner"></div>
-              <p>Carregando tarefas...</p>
-            </div>
-
-            <div id="tasks-list" class="tasks-list" style="display: none">
-              <!-- Tarefas serão inseridas aqui via JavaScript -->
-            </div>
-
-            <div id="no-tasks" class="no-tasks" style="display: none">
-              <div class="no-tasks-icon">
-                <i class="fas fa-clipboard-list"></i>
-              </div>
-              <h3>Nenhuma tarefa encontrada</h3>
-              <p>Crie sua primeira tarefa para começar a organizar seu dia!</p>
-              <a href="#nova-tarefa" class="btn-primary">
-                <i class="fas fa-plus"></i>
-                Criar Primeira Tarefa
-              </a>
-            </div>
-          </div>
-        </section>
       </div>
     </main>
 
