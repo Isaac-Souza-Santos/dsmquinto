@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gerenciar Usuários - DPM</title>
+    <link rel="stylesheet" href="css/styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <!-- Header Moderno -->
+    <header class="header">
+      <div class="container">
+        <div class="logo">
+          <div class="logo-icon">
+            <i class="fas fa-tasks"></i>
+          </div>
+          <div class="logo-text">
+            <h1>DPM</h1>
+            <span>Dashboard</span>
+          </div>
+        </div>
+        <nav class="nav">
+          <div class="nav-links">
+            <a href="index.html" class="nav-link">
+              <i class="fas fa-chart-pie"></i>
+              <span>Dashboard</span>
+            </a>
+            <a href="index.html#tarefas" class="nav-link">
+              <i class="fas fa-list-check"></i>
+              <span>Tarefas</span>
+            </a>
+            <a href="index.html#nova-tarefa" class="nav-link">
+              <i class="fas fa-plus"></i>
+              <span>Nova Tarefa</span>
+            </a>
+            <a href="usuarios.html" class="nav-link active" id="nav-usuarios">
+              <i class="fas fa-users"></i>
+              <span>Usuários</span>
+            </a>
+          </div>
+          <div class="user-menu">
+            <div class="user-info">
+              <div class="user-details">
+                <span id="user-name">Usuário</span>
+                <span id="user-role" class="user-role"></span>
+              </div>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <button onclick="logout()" class="logout-btn">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Sair</span>
+            </button>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="main-content">
+      <div class="container">
+        <div class="users-page-container">
+          <!-- Cabeçalho da Página -->
+          <div class="users-page-header">
+            <div class="users-title">
+              <h2>
+                <i class="fas fa-users"></i>
+                Gerenciar Usuários
+              </h2>
+              <p>Gerencie usuários e níveis de acesso do sistema</p>
+            </div>
+            <button class="btn-refresh" onclick="loadUsers()">
+              <i class="fas fa-sync-alt"></i>
+              Atualizar
+            </button>
+          </div>
+
+          <!-- Estatísticas -->
+          <div class="users-stats">
+            <div class="stat-card primary">
+              <div class="stat-icon">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="stat-content">
+                <h3 id="total-users">0</h3>
+                <p>Total de Usuários</p>
+              </div>
+            </div>
+
+            <div class="stat-card success">
+              <div class="stat-icon">
+                <i class="fas fa-user-check"></i>
+              </div>
+              <div class="stat-content">
+                <h3 id="active-users">0</h3>
+                <p>Usuários Ativos</p>
+              </div>
+            </div>
+
+            <div class="stat-card warning">
+              <div class="stat-icon">
+                <i class="fas fa-user-shield"></i>
+              </div>
+              <div class="stat-content">
+                <h3 id="admin-users">0</h3>
+                <p>Administradores</p>
+              </div>
+            </div>
+
+            <div class="stat-card info">
+              <div class="stat-icon">
+                <i class="fas fa-user-tie"></i>
+              </div>
+              <div class="stat-content">
+                <h3 id="manager-users">0</h3>
+                <p>Gerenciais</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lista de Usuários -->
+          <div class="users-container">
+            <div id="users-loading" class="loading">
+              <div class="spinner"></div>
+              <p>Carregando usuários...</p>
+            </div>
+
+            <div id="users-list" class="users-list" style="display: none">
+              <!-- Usuários serão inseridos aqui via JavaScript -->
+            </div>
+
+            <div id="no-users" class="no-tasks" style="display: none">
+              <div class="no-tasks-icon">
+                <i class="fas fa-users"></i>
+              </div>
+              <h3>Nenhum usuário encontrado</h3>
+              <p>Não há usuários cadastrados no sistema.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Modal de Alterar Nível de Acesso -->
+    <div id="change-role-modal" class="modal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>
+            <i class="fas fa-user-shield"></i>
+            Alterar Nível de Acesso
+          </h3>
+          <button class="close-btn" id="close-role-modal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <form id="change-role-form" class="task-form">
+          <input type="hidden" id="change-role-user-id" name="id" />
+          <div class="form-group">
+            <label for="change-role-name">
+              <i class="fas fa-user"></i>
+              Usuário
+            </label>
+            <input type="text" id="change-role-name" readonly />
+          </div>
+          <div class="form-group">
+            <label for="change-role-email">
+              <i class="fas fa-envelope"></i>
+              Email
+            </label>
+            <input type="text" id="change-role-email" readonly />
+          </div>
+          <div class="form-group">
+            <label for="change-role-level">
+              <i class="fas fa-shield-alt"></i>
+              Nível de Acesso *
+            </label>
+            <select id="change-role-level" name="nivel_acesso" required>
+              <option value="visualizacao">👤 Visualização</option>
+              <option value="gerencial">👔 Gerencial</option>
+              <option value="administrativo">🔐 Administrativo</option>
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" id="cancel-role-change">
+              <i class="fas fa-times"></i>
+              Cancelar
+            </button>
+            <button type="submit" class="btn-primary">
+              <i class="fas fa-save"></i>
+              Salvar Alterações
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Toast de Notificação -->
+    <div id="toast" class="toast" style="display: none">
+      <div class="toast-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <span id="toast-message"></span>
+      <button class="toast-close">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <script src="js/usuarios.js"></script>
+  </body>
+</html>

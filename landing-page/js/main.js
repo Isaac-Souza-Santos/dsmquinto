@@ -2,6 +2,7 @@
 const API_BASE_URL = "http://127.0.0.1:5000";
 const API_ENDPOINTS = {
   tarefas: `${API_BASE_URL}/tarefas/`,
+  usuarios: `${API_BASE_URL}/usuarios/`,
 };
 
 // Estado de autenticação
@@ -42,6 +43,7 @@ function getAuthHeaders(customHeaders = {}) {
 // Estado global da aplicação
 let tasks = [];
 let currentFilter = "todas";
+let users = [];
 
 // Elementos DOM
 const elements = {
@@ -93,6 +95,9 @@ async function initializeApp() {
       return;
     }
 
+    // Verificar se é admin e mostrar/esconder menu
+    checkAdminAccess();
+
     await loadTasks();
     updateStatistics();
   } catch (error) {
@@ -131,6 +136,24 @@ function setupEventListeners() {
   document
     .getElementById("cancel-edit")
     .addEventListener("click", closeEditModal);
+
+  // Modal de alterar nível
+  const changeRoleModal = document.getElementById("change-role-modal");
+  if (changeRoleModal) {
+    document
+      .getElementById("close-role-modal")
+      .addEventListener("click", () => {
+        changeRoleModal.style.display = "none";
+      });
+    document
+      .getElementById("cancel-role-change")
+      .addEventListener("click", () => {
+        changeRoleModal.style.display = "none";
+      });
+    document
+      .getElementById("change-role-form")
+      .addEventListener("submit", handleChangeRole);
+  }
 
   // Toast
   document.querySelector(".toast-close").addEventListener("click", hideToast);
@@ -487,6 +510,22 @@ function updateStatistics() {
   if (userNameElement && currentUser) {
     userNameElement.textContent = currentUser.nome || "Usuário";
   }
+
+  // Atualizar nível de acesso do usuário
+  const userRoleElement = document.getElementById("user-role");
+  if (userRoleElement && currentUser) {
+    const nivelAcesso = currentUser.nivel_acesso || "visualizacao";
+    const roleLabels = {
+      visualizacao: "👤 Visualização",
+      gerencial: "👔 Gerencial",
+      administrativo: "🔐 Administrador",
+    };
+    userRoleElement.textContent = roleLabels[nivelAcesso] || nivelAcesso;
+    userRoleElement.className = `user-role role-${nivelAcesso}`;
+  }
+
+  // Verificar acesso de admin
+  checkAdminAccess();
 }
 
 // Mostrar/esconder loading
@@ -642,6 +681,205 @@ function logout() {
   // Redirecionar para login
   window.location.href = "login.html";
 }
+
+// Verificar acesso de admin
+function checkAdminAccess() {
+  const navUsuarios = document.getElementById("nav-usuarios");
+
+  if (currentUser && currentUser.nivel_acesso === "administrativo") {
+    if (navUsuarios) navUsuarios.style.display = "flex";
+  } else {
+    if (navUsuarios) navUsuarios.style.display = "none";
+  }
+}
+
+// Carregar usuários da API
+async function loadUsers() {
+  try {
+    const loadingElement = document.getElementById("users-loading");
+    const usersListElement = document.getElementById("users-list");
+    const noUsersElement = document.getElementById("no-users");
+
+    if (loadingElement) loadingElement.style.display = "block";
+    if (usersListElement) usersListElement.style.display = "none";
+    if (noUsersElement) noUsersElement.style.display = "none";
+
+    const response = await fetch(API_ENDPOINTS.usuarios, {
+      method: "GET",
+      headers: getAuthHeaders(),
+      mode: "cors",
+      credentials: "same-origin",
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error(`401: Token inválido ou expirado`);
+      }
+      if (response.status === 403) {
+        throw new Error(
+          `403: Acesso negado. Apenas administradores podem gerenciar usuários.`
+        );
+      }
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    users = data.usuarios || [];
+
+    renderUsers();
+    if (loadingElement) loadingElement.style.display = "none";
+  } catch (error) {
+    const loadingElement = document.getElementById("users-loading");
+    if (loadingElement) loadingElement.style.display = "none";
+
+    showToast(
+      error.message.includes("403")
+        ? "Apenas administradores podem gerenciar usuários"
+        : "Erro ao carregar usuários",
+      "error"
+    );
+    console.error("Erro ao carregar usuários:", error);
+  }
+}
+
+// Renderizar lista de usuários
+function renderUsers() {
+  const usersListElement = document.getElementById("users-list");
+  const noUsersElement = document.getElementById("no-users");
+  const usersCountElement = document.getElementById("users-count");
+
+  if (!usersListElement) return;
+
+  if (users.length === 0) {
+    usersListElement.style.display = "none";
+    if (noUsersElement) noUsersElement.style.display = "block";
+    if (usersCountElement) usersCountElement.textContent = "0 usuários";
+    return;
+  }
+
+  if (noUsersElement) noUsersElement.style.display = "none";
+  usersListElement.style.display = "block";
+
+  const roleLabels = {
+    visualizacao: "👤 Visualização",
+    gerencial: "👔 Gerencial",
+    administrativo: "🔐 Administrador",
+  };
+
+  usersListElement.innerHTML = users
+    .map((user) => {
+      const roleLabel = roleLabels[user.nivel_acesso] || user.nivel_acesso;
+      const isActive = user.ativo !== false;
+
+      return `
+    <div class="user-item ${!isActive ? "inactive" : ""}" data-id="${user.id}">
+      <div class="user-item-header">
+        <div class="user-item-info">
+          <h3 class="user-item-name">${escapeHtml(user.nome)}</h3>
+          <span class="user-item-email">${escapeHtml(user.email)}</span>
+        </div>
+        <span class="user-item-role role-${
+          user.nivel_acesso
+        }">${roleLabel}</span>
+      </div>
+      
+      <div class="user-item-meta">
+        <span class="user-item-status ${isActive ? "active" : "inactive"}">
+          <i class="fas fa-circle"></i>
+          ${isActive ? "Ativo" : "Inativo"}
+        </span>
+        <span class="user-item-date">
+          <i class="fas fa-calendar"></i>
+          ${new Date(user.data_criacao).toLocaleDateString("pt-BR")}
+        </span>
+      </div>
+      
+      <div class="user-item-actions">
+        <button class="user-btn btn-change-role" onclick="openChangeRoleModal(${
+          user.id
+        })" ${!isActive ? "disabled" : ""}>
+          <i class="fas fa-user-shield"></i>
+          Alterar Nível
+        </button>
+      </div>
+    </div>
+  `;
+    })
+    .join("");
+
+  if (usersCountElement) {
+    usersCountElement.textContent = `${users.length} usuário${
+      users.length !== 1 ? "s" : ""
+    }`;
+  }
+}
+
+// Abrir modal de alterar nível
+function openChangeRoleModal(userId) {
+  const user = users.find((u) => u.id === userId);
+  if (!user) return;
+
+  const modal = document.getElementById("change-role-modal");
+  const form = document.getElementById("change-role-form");
+  if (!modal || !form) return;
+
+  document.getElementById("change-role-user-id").value = user.id;
+  document.getElementById("change-role-name").value = user.nome;
+  document.getElementById("change-role-email").value = user.email;
+  document.getElementById("change-role-level").value = user.nivel_acesso;
+
+  modal.style.display = "flex";
+}
+
+// Alterar nível de acesso
+async function handleChangeRole(event) {
+  event.preventDefault();
+
+  const formData = new FormData(event.target);
+  const userId = parseInt(formData.get("id"));
+  const nivelAcesso = formData.get("nivel_acesso");
+
+  try {
+    const response = await fetch(`${API_ENDPOINTS.usuarios}${userId}/nivel`, {
+      method: "PUT",
+      headers: getAuthHeaders({
+        "Content-Type": "application/json",
+      }),
+      mode: "cors",
+      credentials: "same-origin",
+      body: JSON.stringify({ nivel_acesso: nivelAcesso }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 403) {
+        throw new Error(
+          "Apenas administradores podem alterar níveis de acesso"
+        );
+      }
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+
+    // Atualizar usuário na lista
+    const index = users.findIndex((u) => u.id === userId);
+    if (index !== -1) {
+      users[index].nivel_acesso = nivelAcesso;
+    }
+
+    renderUsers();
+    document.getElementById("change-role-modal").style.display = "none";
+
+    showToast("Nível de acesso alterado com sucesso!", "success");
+  } catch (error) {
+    showToast(error.message || "Erro ao alterar nível de acesso", "error");
+    console.error("Erro ao alterar nível:", error);
+  }
+}
+
+// Exportar funções para uso global
+window.loadUsers = loadUsers;
+window.openChangeRoleModal = openChangeRoleModal;
 
 // Exportar função de logout para uso global
 window.logout = logout;

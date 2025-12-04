@@ -7,6 +7,7 @@ from flask_restx import Resource, Namespace, fields
 from datetime import datetime
 from src.models.usuario import Usuario, create_auth_models, init_auth_database
 from src.utils.role_middleware import require_admin, require_manager_or_admin, require_permission
+from src.utils.auth_middleware import require_auth
 from src.utils.permissions import obter_niveis_disponiveis, validar_nivel_acesso
 
 def create_user_routes(api):
@@ -37,6 +38,9 @@ def create_user_routes(api):
     class UsuariosList(Resource):
         @user_ns.doc('listar_usuarios')
         @user_ns.response(200, 'Sucesso')
+        @user_ns.response(401, 'Token inválido')
+        @user_ns.response(403, 'Permissão insuficiente')
+        @require_auth
         @require_manager_or_admin
         def get(self):
             """Listar todos os usuários (apenas gerencial e administrativo)"""
@@ -71,6 +75,9 @@ def create_user_routes(api):
         @user_ns.expect(usuario_registro_model)
         @user_ns.response(201, 'Usuário criado com sucesso', usuario_resposta_model)
         @user_ns.response(400, 'Erro de validação')
+        @user_ns.response(401, 'Token inválido')
+        @user_ns.response(403, 'Permissão insuficiente')
+        @require_auth
         @require_admin
         def post(self):
             """Criar novo usuário (apenas administrativo)"""
@@ -113,7 +120,10 @@ def create_user_routes(api):
     class UsuarioResource(Resource):
         @user_ns.doc('obter_usuario')
         @user_ns.response(200, 'Sucesso', usuario_resposta_model)
+        @user_ns.response(401, 'Token inválido')
+        @user_ns.response(403, 'Permissão insuficiente')
         @user_ns.response(404, 'Usuário não encontrado')
+        @require_auth
         @require_manager_or_admin
         def get(self, id):
             """Obter usuário por ID"""
@@ -143,7 +153,10 @@ def create_user_routes(api):
         @user_ns.expect(usuario_update_model)
         @user_ns.response(200, 'Usuário atualizado com sucesso', usuario_resposta_model)
         @user_ns.response(400, 'Erro de validação')
+        @user_ns.response(401, 'Token inválido')
+        @user_ns.response(403, 'Permissão insuficiente')
         @user_ns.response(404, 'Usuário não encontrado')
+        @require_auth
         @require_admin
         def put(self, id):
             """Atualizar usuário (apenas administrativo)"""
@@ -195,7 +208,10 @@ def create_user_routes(api):
         
         @user_ns.doc('remover_usuario')
         @user_ns.response(200, 'Usuário removido com sucesso')
+        @user_ns.response(401, 'Token inválido')
+        @user_ns.response(403, 'Permissão insuficiente')
         @user_ns.response(404, 'Usuário não encontrado')
+        @require_auth
         @require_admin
         def delete(self, id):
             """Remover usuário (apenas administrativo)"""
@@ -227,6 +243,9 @@ def create_user_routes(api):
     class NiveisAcesso(Resource):
         @user_ns.doc('listar_niveis')
         @user_ns.response(200, 'Sucesso', niveis_model)
+        @user_ns.response(401, 'Token inválido')
+        @user_ns.response(403, 'Permissão insuficiente')
+        @require_auth
         @require_manager_or_admin
         def get(self):
             """Listar níveis de acesso disponíveis"""
@@ -246,7 +265,10 @@ def create_user_routes(api):
         }))
         @user_ns.response(200, 'Nível alterado com sucesso')
         @user_ns.response(400, 'Erro de validação')
+        @user_ns.response(401, 'Token inválido')
+        @user_ns.response(403, 'Permissão insuficiente')
         @user_ns.response(404, 'Usuário não encontrado')
+        @require_auth
         @require_admin
         def put(self, id):
             """Alterar nível de acesso de um usuário (apenas administrativo)"""
